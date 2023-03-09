@@ -1,0 +1,7 @@
+(executable
+ (public_name arbres)
+ (name main)
+ (libraries arbres))
+(env
+  (dev
+    (flags (:standard -w -27 -w -26))))

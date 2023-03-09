@@ -1,5 +1,6 @@
 open Graphics
-
+let _ =
+    Random.self_init ();
 type arbre =
     Nil
     | Noeud of arbre*string*arbre
@@ -7,10 +8,8 @@ type arbre =
 type dir = 
     G | D
 
-let tw = 50
-let th = 50
-let rnoeud = 5 (* Le rayon du noeud *)
-let marge = 2 (* la marge autour du noeud *)
+let rnoeud = 10 (* Le rayon du noeud *)
+let marge = 10 (* la marge autour du noeud *)
 
 let rec pixels a = match a with
     | Nil -> 0, 0
@@ -20,25 +19,27 @@ let rec pixels a = match a with
             lg + ld + 2*(marge + rnoeud), lg + marge + rnoeud
 
 let rec dessine a x y =
+    
     match a with
     | Nil -> ()
     | Noeud(g, e, d) ->
             (* On précalcule les tailles des sous-arbres *)
             let lg, rg = pixels g in
             let _, rd = pixels d in
+
             (* position de la racine gauche relativement à (x,y) *)
-            
             let v_rg = x - lg - marge - rnoeud + rg in
-            
+
             (* position de la racine droite relative (x, y) *)
             let v_rd = x + marge + rnoeud + rd in
+            
             let dec_y = y - 2 * rnoeud - marge in
 
             moveto x y; lineto v_rg dec_y;
             moveto x y; lineto v_rd dec_y;
             fill_circle x y rnoeud;
 
-            moveto (x-tw/2) (y-th/2);
+            moveto (x) (y);
             set_color red;
             draw_string e;
             set_color black;
@@ -51,8 +52,8 @@ let random_char () =
 
 let rec  genere_arbre_1 n = 
     if n = 0 then Nil else
-    let r = Random.int n in
-    Noeud( genere_arbre_1 r, random_char (), genere_arbre_1 (n-r-1))
+        let r = Random.int n in
+        Noeud( genere_arbre_1 r, random_char (), genere_arbre_1 (n-r-1))
 
 let rec foreach l f = 
     match l with
@@ -76,7 +77,7 @@ let genere_arbre_2 n =
         if i = 0 then a 
         else let chems = chemins_vide a in 
         aux (i-1) (remplit a (List.nth chems (Random.int (n-i+1))))
-    in aux n Nil
+        in aux n Nil
 
 
 let a = Nil
@@ -87,6 +88,6 @@ let () = if a<>b then
     let x,y = (pixels b) in 
     Printf.printf "%i %i\n" x y;
     open_graph " ";
-    let w, _ = pixels b in
-    dessine b (w/2) (w-rnoeud);
+    let w,r = pixels b in
+    dessine b ((size_x ()) /2) ((size_y ())/2);
     let _ = Scanf.scanf "%c" (fun _ -> ()) in Printf.printf "\n" 

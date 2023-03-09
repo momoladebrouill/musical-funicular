@@ -1,0 +1,7 @@
+(executable
+ (public_name tries)
+ (name main)
+ (libraries tries))
+(env
+  (dev
+    (flags (:standard -w -27 -w -26))))
