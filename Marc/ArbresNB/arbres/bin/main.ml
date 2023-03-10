@@ -58,10 +58,29 @@ let rec print_arbre_bin pref t =
      print_arbre_bin (String.make (String.length pref) ' ' ^ "|" ^ String.make 5 '-') g;
      print_arbre_bin (String.make (String.length pref) ' ' ^ "|" ^ String.make 5 '-') d
 
+let print_x x =
+        print_string ((match x with None -> "*" | Some n -> string_of_int n)^" ")
+
+let parcours_larg a =
+    let rec aux l =
+        if l = [] then () else
+            aux  (List.fold_left (@) []  (List.map (fun x->
+                begin print_x (Some x.etiquette);x.enfants end) l))
+    in let _ = aux [a] in ()
+
+let parcours_larg_bin a =
+    let rec aux l =
+        if l = [] then () else
+            aux (List.fold_left (@) [] (List.map (fun x-> 
+                match x with Nil -> []
+                | Noeud (g,x,d) -> print_x x; [g;d]) l))
+    in aux [a]
+
 let () =
     Printf.printf "%d\n" (taille_arbre t);
     Printf.printf "%d\n" (hauteur_arbre t);
     affiche_etiquettes t;
     print_char '\n';
     print_arbre_bin "" (convert t);
-    print_endline "Hello, World!"
+    parcours_larg t;
+    parcours_larg_bin (convert t)
