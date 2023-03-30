@@ -38,7 +38,7 @@ void freetree(arbre * a){
         freetree(a->gauche);
         freetree(a->droite);
         free(a);
-   }
+    }
 }
 
 void print_arbre(int niv,arbre *a){
@@ -84,9 +84,9 @@ int taille(arbre *a){
 
 void incr(arbre *a){
     if(a){
-    (a->valeur)++;
-    incr(a->gauche);
-    incr(a->droite);
+        (a->valeur)++;
+        incr(a->gauche);
+        incr(a->droite);
     }
 }
 int main(void){
