@@ -182,5 +182,6 @@ int main(void){
     set_remove(e,1493);
     printf("1493 : %b\n",set_is_member(e,1493));
     set_delete(e);
+    set * 
     return 0;
 }
