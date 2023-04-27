@@ -30,24 +30,24 @@ let rec a i = if i = 0 then E else ajoute (a (i-1)) i
 
 let print_arbre a =
     let rec aux p a =
+        let indent_and_print s = 
+            for _ = 0 to p do print_string "- " done; print_string (s^"\n") in
         match a with
-    E -> ()
-    | N(g,x,d) -> 
-            for _=0 to p do print_string "- " done;
-            print_int x;
-            print_char '\n';
+        E -> indent_and_print "E"
+        | N(g,x,d) -> 
+            indent_and_print (string_of_int x);
             aux (p+1) g;
             aux (p+1) d
-     in aux 0
+    in aux 0 a
 
 let supprime_minimum a =
     match a with
     | E -> E
-    | N(E,x,d) -> d
-    | N(g,x,E) -> g
-    | N(N(a,x,b),_,N(c,y,d)) -> 
-            if x < y then N(fusion a b,x,N(c,y,d))
-            else N(N(a,x,b),y,fusion c d)
+    | N(E,_,t) 
+    | N(t,_,E) -> t
+    | N((N(a,x,b) as t1),_,(N(c,y,d) as t2)) -> 
+            if x < y then N(fusion a b,x,t2)
+            else N(t1,y,fusion c d)
 
 let ajouts_successifs v =
     let rec aux i =
@@ -66,5 +66,8 @@ let rec potentiel t =
 
 let tri a =
     let b = ref (ajouts_successifs a) in
-    Array.init (Array.length a - 1) (fun i -> let mini = minimum !b in b:=supprime_minimum !b; mini) 
-
+    Array.init (Array.length a - 1) (fun i -> let mini = minimum !b in b:=supprime_minimum !b; mini)
+    ;
+(* FOR UTOP : *)
+#install_printer print_arbre;;
+let q = a 5;;
