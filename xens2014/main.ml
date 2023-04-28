@@ -82,8 +82,7 @@ let decomp_puis n =
     let rec aux n acc puis i=
         if n = 0 then acc 
         else 
-            let b = (puis land n) / puis = 1 in
-            (if b then aux (n - puis) ((puis,i)::acc)
+            (if (puis land n) / puis = 1 then aux (n - puis) ((puis,i)::acc)
             else aux n acc) (2*puis) (i+1)
     in aux n [] 1 0
 
