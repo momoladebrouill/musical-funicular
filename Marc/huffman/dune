@@ -1,1 +1,4 @@
-(executable (name mp2zip))
+(executable 
+  (name mp2zip)
+  (modules mp2zip tas filePriorite huffman compression decompression)
+  )
