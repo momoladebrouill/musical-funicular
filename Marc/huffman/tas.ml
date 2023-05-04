@@ -42,7 +42,6 @@ let ajoute x tas =
 
 let max_pere_fils tas a =
     let max_courant = ref a in
-
     if tas.taille > gauche a 
         && nth tas (gauche a) > nth tas !max_courant
     then max_courant := gauche a;

@@ -1,4 +1,3 @@
-
 type arbre = Char of int | Node of arbre * arbre
 
 let construit_arbre t =
