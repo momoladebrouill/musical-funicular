@@ -22,3 +22,22 @@ let compte_diff l1 l2 =
 let hypercube n =
     Array.init (n*n) (fun i -> List.filter 
       (fun j -> compte_diff (vers_bin n i) (vers_bin n j) = 1) (List.init (pow n) Fun.id))
+let aleatoire n p =
+    let g = Array.make n [] in
+    for i = 1 to  p do
+        let ind = Random.int n in
+        g.(ind) <- (Random.int n)::g.(ind)
+    done; g
+
+let rec parcours g visites x =
+    visites.(x) <- true;
+    List.iter (parcours g visites) (List.filter (fun y -> not visites.(y)) g.(x))
+
+ let taille_composante g x =
+     let visites = Array.make (Array.length g) false in
+     parcours g visites x;
+     Array.fold_left (fun a x-> if x then a+1 else a) 0 visites
+
+let connexe graphe = 
+    (Array.length graphe = 0) ||( (taille_composante graphe 0) = (Array.length graphe))
+let _ = hypercube 20 
