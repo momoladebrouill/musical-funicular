@@ -32,6 +32,13 @@ let aleatoire n p =
 let rec parcours g visites x =
     visites.(x) <- true;
     List.iter (parcours g visites) (List.filter (fun y -> not visites.(y)) g.(x))
+let parcours_fun f g x =
+    let visites = Array.make (Array.length g) false in
+    let rec aux x =
+      visites.(x) <- true;
+      f x;
+      List.iter aux (List.filter (fun y -> not visites.(y)) g.(x))
+   in aux x
 
  let taille_composante g x =
      let visites = Array.make (Array.length g) false in
@@ -40,4 +47,30 @@ let rec parcours g visites x =
 
 let connexe graphe = 
     (Array.length graphe = 0) ||( (taille_composante graphe 0) = (Array.length graphe))
-let _ = hypercube 20 
+
+let proportions n pmax =
+    List.init pmax (fun p -> (*pour chaque p*)
+        List.fold_left (fun a _ -> (*compter le nombre de graphes connexes*)
+           if connexe (aleatoire n p) then a+1 else a) 0
+        (List.init 100 Fun.id) (*sur une base de 100 éléments*)
+    )
+
+let composante g =
+    let assoc = Array.make (Array.length g) 0 in
+    let rec aux j = 
+        match 
+          Array.find_opt 
+          (fun (_,v) -> v=0) 
+          (Array.mapi (fun i j -> i,j) assoc) 
+        with (*rechercher ceux qui sont repertorié dans la composante connexe 0*)
+        Some(i,_) -> parcours_fun (fun i -> assoc.(i) <- j) g i ; aux (j+1)
+        (* si on en a un,on le repertorie dans la composante connexe j et on continue*)
+        | None -> let assoc = List.of_seq (Array.to_seq assoc) in
+          List.init j 
+          (fun i -> 
+              List.filter_map 
+              (fun (k,v) -> if v=i then Some(k) else None) 
+              (List.mapi (fun i j -> i,j) assoc)
+         )
+          (*sinon, on transforme le tableau indiquant les répartions en listes cde connexes*)
+   in List.tl (aux 1) (*enlever le premier element*)
