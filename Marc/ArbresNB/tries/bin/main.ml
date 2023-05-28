@@ -6,7 +6,7 @@ type trie = {
 
 let c = {mot=false;
         enfants=[
-        ('a',{mot=true;enfants=[]});
+            ('a',{mot=true;enfants=[]});
         ('b',{mot=false;enfants=[
             ('c',{mot=true;enfants=[]});
             ('d',{mot = true;enfants= [
@@ -20,35 +20,44 @@ let rec nb_mots a =
     List.fold_left (+) (if a.mot then 1 else 0) (List.map (fun (_, x)-> nb_mots x) a.enfants)
 
 let trie_apres_char l c =
-  List.find_opt (fun (d,_) -> d = c) l
+    List.find_opt (fun (d,_) -> d = c) l
 
 let contient a s =
     let rec aux a s i =
-      if i+1 = String.length s then true else
-      match  trie_apres_char a.enfants s.[i] with
+        if i+1 = String.length s then true else
+            match  trie_apres_char a.enfants s.[i] with
       None -> false
       | Some (_,a) -> aux a s (i+1)
     in aux a s 0 
 
+let rec print_arbre_bin pref t =
+    match t with
+    | Nil -> Printf.printf "%snil\n%!" pref
+    | Noeud(g,x,d) -> 
+            Printf.printf "%s%s\n%!" pref 
+        (match x with None -> "*" | Some n -> string_of_int n);
+     print_arbre_bin (String.make (String.length pref) ' ' ^ "|" ^ String.make 5 '-') g;
+     print_arbre_bin (String.make (String.length pref) ' ' ^ "|" ^ String.make 5 '-') d
+
 let enumere a =
-  let rec aux mot current chr =
-      let new_word = mot ^ chr in
-      let kids_words = List.concat (List.map (fun (chr,x) -> aux new_word x (String.make 1 chr)) current.enfants)
-      in if current.mot then new_word :: kids_words else kids_words
-  in aux "" a ""
+    let rec aux mot current chr =
+        let new_word = mot ^ chr in
+        let kids_words = List.concat (List.map (fun (chr,x) -> aux new_word x (String.make 1 chr)) current.enfants)
+        in if current.mot then new_word :: kids_words else kids_words
+        in aux "" a ""
 
 let suffixe i s =
     let len = String.length s - 1 in
     let rec aux i =
-      if i = len then (s.[i],{mot = true; enfants = []})
-      else (s.[i],{mot = false; enfants = [aux (i+1)]})
+        if i = len then (s.[i],{mot = true; enfants = []})
+        else (s.[i],{mot = false; enfants = [aux (i+1)]})
     in {mot = false; enfants = [aux i]}
 
 let avec_trie_pour_char l c t =
     let rec aux l  =
         match l with 
         [] -> [(c,t)]
-        |(a,t')::q -> if a = c then (c,t)::q else (a,t')::(aux q)
+      |(a,t')::q -> if a = c then (c,t)::q else (a,t')::(aux q)
     in aux l
 
 let ajoute t s =
@@ -56,23 +65,39 @@ let ajoute t s =
         if i = String.length s then t else
             { 
                 mot  = t.mot; enfants = avec_trie_pour_char t.enfants s.[i]  
-            begin 
-              match trie_apres_char t.enfants s.[i] with 
-              None -> suffixe i s 
-              | Some (c,t) ->  aux t (i+1)
-            end 
+                begin 
+                    match trie_apres_char t.enfants s.[i] with 
+                    None -> suffixe (i+1) s 
+                    | Some (c,t) ->  aux t (i)
+                end 
     }
     in aux t 0
 
-let () = 
-    print_int (nb_mots c);
-    print_int (taille c);
+let rec trie_of_list l = match l with
+    | [] -> { mot = false; enfants = [] }
+    | s::q -> ajoute (trie_of_list q) s
+
+let wordlist = let rec lit_fichier f =
+    try
+        let s = input_line f in
+        s :: lit_fichier f
+  with End_of_file -> []
+  in lit_fichier (open_in "test.txt")
+
+let () =
+    let wordtrie = (trie_of_list wordlist) in
+    print_
+    print_int (nb_mots wordtrie);
+    print_newline ();
+
+    print_int (taille wordtrie);
     assert (trie_apres_char c.enfants 'a' = Some ('a',{mot=true;enfants=[]}));
     assert ((trie_apres_char c.enfants 'f') = None);
     assert (contient c "bc");
     assert (contient (suffixe 2 "abcde") "cde");
     print_endline "les mots de cet arbre :";
     List.iter print_endline (enumere (ajoute c "bde des etudiants"));
+    List.iter print_endline (enumere wordtrie);
     print_endline "Hello, World!"
 
 
