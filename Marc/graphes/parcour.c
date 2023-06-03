@@ -36,16 +36,17 @@ void insert_edge(graph *g, int x, int y, bool directed){
 	n->y = y;
 	n->next = g->edges[x];
 	g->edges[x] = n;
+	g->degree[x]++;
 	if(directed)
-		g->degree[x]++;
+		g->nvertices++;
 	else
 		insert_edge(g,y,x,true);
 }
 
 void read_graph(graph *g){
 	int n,p,o,x,y;
-	scanf("%d %d %b",&n,&p,&o);
-	initialize_graph(g,o==0);
+	scanf("%d %d %d",&n,&p,&o);
+	initialize_graph(g,o);
 	for(int i=0; i<p; i++){
 		scanf("%d %d",&x,&y);
 		insert_edge(g,x,y,g->directed);
@@ -73,6 +74,7 @@ void initialize_search(graph *g){
 }
 
 void print_graph(graph * g){
+	printf("Edges %d Vertices %d\n",g->nedges,g->nvertices);
 	edgenode *s;
 	for(int i=0;i<MAXV;i++){
 		if(g->edges[i]){
