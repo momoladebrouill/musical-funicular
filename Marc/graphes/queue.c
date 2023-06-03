@@ -48,7 +48,7 @@ void enqueue(queue *s, int x)
 bool empty_q(queue *s){
 	return (s->back - s->front+MAXV-1)%MAXV==0;
 }
-
+/*
 int main(void){
 	queue * s = malloc(sizeof(queue));
 	init_queue(s);
@@ -58,4 +58,4 @@ int main(void){
 	printf("\ndeque : ");
 	for(int i=0;!empty_q(s);i++)printf("%d ",dequeue(s));
 	printf("\n");
-}
+}*/
