@@ -89,9 +89,9 @@ void print_graph(graph * g){
 	}
 }
 
-void process_vertex_early(graph *g, int v){printf("%d ",v);}
+void process_vertex_early(graph *g, int v){printf("processing vertex %d\n", v);}
 void process_vertex_late(graph *g, int v){}
-void process_edge(graph *g, int x, int y){g->parent[x]=y;}
+void process_edge(graph *g, int x, int y){printf("processed edge %d --> %d\n", x, y);}
 
 void dfs(graph *g, int x){
 	process_vertex_early(g,x);
@@ -108,25 +108,14 @@ void dfs(graph *g, int x){
 	g->processed[x] = true;
 }
 
-void connected_components(graph *g){
-	initialize_search(g);
-	int i=0;
-	for(int i=0;i<MAXV;i++){
-		if(g->parent[i]==-1 && g->degree[i] != 0){
-			printf("parcour : ");
-			dfs(g,i);
-			printf("\n");
-		}
-	}
-}
-
-
+void connected_components(graph *g);
 
 int main(void){
 	graph * g = malloc(sizeof(graph));
 	read_graph(g);
 	print_graph(g);
-	connected_components(g);
+	initialize_search(g);
+	dfs(g,0);
 	free_edges(g);
 	return 0;
 }
