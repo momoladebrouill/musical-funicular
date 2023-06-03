@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdio.h>
+#define TREE 0
+#define BACK 1
+#define FORWARD 2
+#define CROSS 3
+
 struct edgenode {
 	int y; // le voisin
 	struct edgenode *next; // la suite de la liste
@@ -18,6 +23,9 @@ struct graph {
 	bool processed[MAXV]; // Quels sommets sont traités
 	int parent[MAXV]; // parent[x] est le père de x dans le parcours
 			  // s'il n'y en a pas, c'est -1
+	int time; // l'horloge
+int entry_time[MAXV];
+int exit_time[MAXV];
 };
 typedef struct graph graph;
 
@@ -70,7 +78,9 @@ void initialize_search(graph *g){
 	for(int x=0;x<MAXV;x++){
 		g->discovered[x] = g->processed[x] = false;
 		g->parent[x] = -1;
+		g->entry_time[x] = g->exit_time[x] = 0;
 	}
+	g->time = 0;
 }
 
 void print_graph(graph * g){
@@ -97,6 +107,8 @@ void dfs(graph *g, int x){
 	process_vertex_early(g,x);
 	edgenode * s = g->edges[x];
 	g->discovered[x] = true;
+	g->time++;
+	g->entry_time[x] = g->time;
 	while(s){
 		if(!(g->discovered[s->y])){
 			process_edge(g,x,s->y);
@@ -104,11 +116,26 @@ void dfs(graph *g, int x){
 		}
 		s = s->next;
 	}
+	g->exit_time[x] = g->time;
 	process_vertex_late(g,x);
 	g->processed[x] = true;
 }
 
 void connected_components(graph *g);
+
+int edge_classification(graph *g, int x, int y){
+	int 
+		prex = g->entry_time[x],
+		postx = g->entry_time[x],
+		prey = g->entry_time[y],
+		posty = g->entry_time[y];
+	if(prex<prey && posty<postx){
+		if(prex + 1 == prey) return TREE;
+		else return BACK;
+	}
+	if(edge_classification(g,y,x) == TREE || edge_classification(g,y,x) == BACK) return FORWARD;
+	else return CROSS;
+}
 
 int main(void){
 	graph * g = malloc(sizeof(graph));
