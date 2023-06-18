@@ -1,0 +1,3 @@
+(executable
+   (name zeta)
+   (libraries raylib))
