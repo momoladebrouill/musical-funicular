@@ -34,11 +34,11 @@ type game_state = {
    intéressant. Faites un mélange des voisins pour rajouter de l'aléatoire.
    *)
 
-let rec shuffle l =
+(*let rec shuffle l =
     match l with
     | [] -> []
     | a::b::q -> if Random.int 2 = 1 then a::b::(shuffle q) else b::a::(shuffle q)
-    | t::q -> t::(shuffle q)
+    | t::q -> t::(shuffle q*)
 
 let iter_border x y = 
     List.filter 
@@ -47,20 +47,20 @@ let iter_border x y =
 
 let laby world =
     let qqty_sol_vois x y = 
-        List.fold_left (fun s (x,y) -> s + if world.(x).(y) = Sol then 1 else 0) 0 (iter_border x y)
+        List.fold_left (fun s (x',y') -> if world.(x').(y') = Sol then s+1 else s) 0 (iter_border x y)
     in
-    let rec aux (x,y)  =
-        if world.(x).(y) <> Sol then
+    let rec aux n (x,y)  =
+        if world.(x).(y) <> Sol && n>1 then
                 begin 
                     world.(x).(y) <- Sol;
-                    List.iter aux (List.filter (fun (x,y) -> qqty_sol_vois x y = 1) (iter_border x y))
+                    List.iter (aux (n-1)) (List.filter (fun (x,y) -> let q = qqty_sol_vois x y in q=1  ) (iter_border x y))
                 end
-   in aux (1,1)
+   in aux 35 (1,1)
 
 
 (* Question 2 : supprimer n Obstacles aléatoires dans le monde *)
-let dig_holes world n = 
-   let w,h = Array.length world - 1, Array.length world.(0) - 1 in
+let dig_holes world n =() 
+   (*let w,h = Array.length world - 1, Array.length world.(0) - 1 in
     for _ = 0 to n do
         let x,y = ref (1+Random.int w),ref (1+Random.int h) in
         while world.(!x).(!y) = Sol do
@@ -69,7 +69,7 @@ let dig_holes world n =
         done;
         world.(!x).(!y) <- Sol
      done
-
+*)
 (* On demande ici de renvoyer un couple (d, path) où d est la matrice
 de distances dans un Dijkstra issu de g.position et path est soit
 [] soit la liste des coordonnées dans un chemin de g.position vers
@@ -84,10 +84,14 @@ let compute_path g =
     let x,y = g.ennemy in
     d.(x).(y) <- 0;
     let pred = Array.make_matrix world_width world_height None in
-    let to_treat = ref (List.init (world_width*world_height) (fun i -> i/world_width,i mod world_width)) in
+    let to_treat = 
+        ref (List.filter (fun (x,y) -> g.world.(x).(y) = Sol) 
+        (List.init (world_width*world_height) (fun i -> i/world_width,i mod world_width))) in
     while !to_treat <> [] do
         let (x,y),nt = extrait_min !to_treat d in
-        List.iter (fun (x',y') -> if d.(x').(y') > d.(x).(y) + 1 then (d.(x').(y') <- d.(x).(y) + 1; pred.(x').(y') <- Some (x,y) )) (iter_border x y);
+        List.iter (fun (x',y') -> 
+                if g.world.(x').(y') = Sol && d.(x').(y') > d.(x).(y) + 1 
+                then (d.(x').(y') <- d.(x).(y) + 1; pred.(x').(y') <- Some (x,y) )) (iter_border x y);
         to_treat := nt
     done;
     let rec predd (x,y) = 
@@ -262,11 +266,9 @@ let setup () =
     let xe = ref (world_width - 2) in
     (* à décommenter quand votre labyrinthe fonctionne pour placer l'ennemi
        sur la dernière ligne *)
-   (* 
     while world.(!xe).(world_height - 2) <> Sol do
         decr xe
     done;
-    *)
     {
         tileset = tileset;
         link_sheet = link;
