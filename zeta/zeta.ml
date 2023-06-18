@@ -33,44 +33,70 @@ type game_state = {
    Si vous le faites de manière déterministe, votre labyrinthe va être peu
    intéressant. Faites un mélange des voisins pour rajouter de l'aléatoire.
    *)
+
+let rec shuffle l =
+    match l with
+    | [] -> []
+    | a::b::q -> if Random.int 2 = 1 then a::b::(shuffle q) else b::a::(shuffle q)
+    | t::q -> t::(shuffle q)
+
+let iter_border x y = 
+    List.filter 
+        (fun (x,y) -> x > 0 && x < world_width - 1 && y > 0 && y < world_height - 1) 
+        [(x+1,y);(x,y+1);(x - 1,y);(x,y - 1)] 
+
 let laby world =
-    let w = Array.length world - 2 in
-    let h = Array.length world.(0) - 2 in
-    let out_border x y = x<1 || x>w || y<1 || y>h in
-    let iter_border x y = List.init 8 (fun i -> if i=4 then (1,1) else (x - 1 + (i mod 3) ,y - 1 + i/3)) in
-    let qqty_sol_vois x y = (List.fold_left (fun s (x,y) -> s + if (out_border x y) || world.(x).(y) <> Sol then 0 else 1) 0 (iter_border x y)) in
-    let rec aux x y n =
-        if  (out_border x y) || n < 1 || world.(x).(y) = Sol then () 
-        else
-            begin
-            world.(x).(y) <- Sol;
-            let x',y'=ref (x+Random.int 3 - 1),ref (y+Random.int 3 - 1) in
-            while qqty_sol_vois !x' !y' <> 1 do
-                    x' := x+(Random.int 3) - 1;
-                    y' := y+(Random.int 3) - 1
-            done;
-             aux !x' !y' (n-1)
-            end
-    in aux 5 5 100
+    let qqty_sol_vois x y = 
+        List.fold_left (fun s (x,y) -> s + if world.(x).(y) = Sol then 1 else 0) 0 (iter_border x y)
+    in
+    let rec aux (x,y)  =
+        if world.(x).(y) <> Sol then
+                begin 
+                    world.(x).(y) <- Sol;
+                    List.iter aux (List.filter (fun (x,y) -> qqty_sol_vois x y = 1) (iter_border x y))
+                end
+   in aux (1,1)
 
 
 (* Question 2 : supprimer n Obstacles aléatoires dans le monde *)
-let dig_holes world n =
-    ()
+let dig_holes world n = 
+   let w,h = Array.length world - 1, Array.length world.(0) - 1 in
+    for _ = 0 to n do
+        let x,y = ref (1+Random.int w),ref (1+Random.int h) in
+        while world.(!x).(!y) = Sol do
+            x:= (1+Random.int w);
+            y:= (1+Random.int h)
+        done;
+        world.(!x).(!y) <- Sol
+     done
 
 (* On demande ici de renvoyer un couple (d, path) où d est la matrice
-   de distances dans un Dijkstra issu de g.position et path est soit
-   [] soit la liste des coordonnées dans un chemin de g.position vers
-   g.ennemi *)
+de distances dans un Dijkstra issu de g.position et path est soit
+[] soit la liste des coordonnées dans un chemin de g.position vers
+g.ennemi *)
+let extrait_min l d =
+    let _,ind = List.fold_left min  (max_int,(69,420)) (List.map (fun (x,y) -> d.(x).(y),(x,y)) l)
+    in ind,List.filter ((<>) ind) l
+
 let compute_path g =
     let inf = max_int in
     let d = Array.make_matrix world_width world_height inf in
-    d, []
-
+    let x,y = g.ennemy in
+    d.(x).(y) <- 0;
+    let pred = Array.make_matrix world_width world_height None in
+    let to_treat = ref (List.init (world_width*world_height) (fun i -> i/world_width,i mod world_width)) in
+    while !to_treat <> [] do
+        let (x,y),nt = extrait_min !to_treat d in
+        List.iter (fun (x',y') -> if d.(x').(y') > d.(x).(y) + 1 then (d.(x').(y') <- d.(x).(y) + 1; pred.(x').(y') <- Some (x,y) )) (iter_border x y);
+        to_treat := nt
+    done;
+    let rec predd (x,y) = 
+        match pred.(x).(y) with None -> [] | Some (x',y') -> (x,y) :: (predd (x',y')) in
+    d,(predd g.position)
 
 (* ATTENTION à décommenter la partie en dessous sur l'ennemi 
-   quand laby fonctionne. Mis-à-part cela, vous pouvez 
-   ignorer tout ce qu'il y a en dessous. *)
+quand laby fonctionne. Mis-à-part cela, vous pouvez 
+ignorer tout ce qu'il y a en dessous. *)
 
 let create_world () =
     let world = Array.make_matrix world_width world_height Obstacle in
@@ -87,22 +113,22 @@ let create_world () =
     world.(0).(world_height - 1) <- Mur (-1, -1);
     world.(world_width - 1).(world_height - 1) <- Mur (1, -1);
     world
-    
+
 let draw_path g =
     let rec aux p (px, py) = 
         match p with
         | [] -> []
         | [(x,y)] -> 
-            [   match x-px, y-py with
+                [   match x-px, y-py with
                 | 0, -1 -> 10
                 | 0, 1 -> 4
                 | 1, 0 -> 3
                 | -1, 0 -> 9
                 | _ -> 7 ]
-        | (x,y)::(nx,ny)::q ->
-            (match px-x, py-y, x-nx, y-ny with
+                | (x,y)::(nx,ny)::q ->
+                        (match px-x, py-y, x-nx, y-ny with
               1, _, _, 1-> 12
-            | 1, _, _, -1-> 0
+                | 1, _, _, -1-> 0
             | -1, _, _, 1-> 14
             | -1, _, _, -1-> 2
             | -1, _, _, 0 -> 1
@@ -135,7 +161,7 @@ let draw_path g =
                 (tdimf *. float_of_int x) 
                 (tdimf *. float_of_int y))
                 Color.white
-        )
+                )
         (List.combine g.path l)
 
 let world_to_tile world di dj =
@@ -151,14 +177,14 @@ let world_to_tile world di dj =
     | Mur (0,1) -> Some 1
     | Mur (0,-1) -> Some 17
     | _ -> None
- 
+
 let draw_tile tileset t x y =
     let open Raylib in
     let texw = Texture.width tileset in
     let nr = texw / tdim in
     let tx = t mod nr in
     let ty = t / nr in
-  draw_texture_rec 
+    draw_texture_rec 
     tileset
     (Rectangle.create 
         (tdimf *. float_of_int tx) 
@@ -173,8 +199,8 @@ let draw_world g =
             match world_to_tile g.world i j with
             | None -> ()
             | Some t -> draw_tile g.tileset t i j
-        done
     done
+        done
 
 let draw_link g =
     let open Raylib in
@@ -209,7 +235,7 @@ let draw_ennemy g =
         (tdimf *. float_of_int j -. 32.))
         Color.white
 
- let load_texture_from_disk fn =
+let load_texture_from_disk fn =
     let open Raylib in
     let img = load_image fn in
     let texture = load_texture_from_image img in
@@ -220,7 +246,7 @@ let setup () =
     Random.self_init ();
     let open Raylib in
     init_window (tdim * world_width) (tdim * world_height) 
-        "La légende de Zeta";
+    "La légende de Zeta";
     set_target_fps 60;
     let tileset = load_texture_from_disk 
         "resources/zelda-oracle-maison.png" in
@@ -236,7 +262,7 @@ let setup () =
     let xe = ref (world_width - 2) in
     (* à décommenter quand votre labyrinthe fonctionne pour placer l'ennemi
        sur la dernière ligne *)
-    (*
+   (* 
     while world.(!xe).(world_height - 2) <> Sol do
         decr xe
     done;
@@ -254,35 +280,35 @@ let setup () =
         path = [];
         ennemy_move = true;
         distances = Array.make_matrix world_width world_height max_int
-    }
+}
 
 let rec loop g =
-  match Raylib.window_should_close () with
+    match Raylib.window_should_close () with
   | true -> Raylib.close_window ()
   | false ->
-      let open Raylib in
+          let open Raylib in
 
-      begin_drawing ();
+          begin_drawing ();
       clear_background Color.raywhite;
 
       draw_world g;
 
       for x = 0 to world_width - 1 do
           for y = 0 to world_height - 1 do
-                let d = g.distances.(x).(y) in
-                if d < max_int
+              let d = g.distances.(x).(y) in
+              if d < max_int
                 then begin
                     let c = Color.create (5*d) (255-5*d) 0 100 in
                     draw_rectangle (x * tdim) (y * tdim) tdim tdim c;
                     draw_text 
                         (string_of_int d)
                         (x * tdim) (y * tdim) (tdim/2) Color.black
-                end
+            end
           done
-      done;
+          done;
 
       draw_path g;
-      
+
       draw_link g;
       draw_ennemy g;
 
@@ -301,15 +327,15 @@ let rec loop g =
       then ( p := (x+1, y); d := 2 );
 
       let ennemy_move = if is_key_pressed Key.P 
-        then not g.ennemy_move
+      then not g.ennemy_move
         else g.ennemy_move in
 
       let distances, path = if !p <> g.position || ennemy_move
-          then compute_path { g with position = !p }
-          else g.distances, g.path in
+      then compute_path { g with position = !p }
+      else g.distances, g.path in
 
       let e = if not ennemy_move || g.frame mod 24 <> 0
-        then g.ennemy
+      then g.ennemy
         else match List.rev path with
             | _::(x,y)::_ -> (x,y)
             | _ -> g.ennemy
@@ -324,4 +350,4 @@ let rec loop g =
         distances = distances;
         frame = g.frame + 1 }
 
-let () = setup () |> loop
+      let () = setup () |> loop
