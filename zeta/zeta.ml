@@ -34,33 +34,33 @@ type game_state = {
    intéressant. Faites un mélange des voisins pour rajouter de l'aléatoire.
    *)
 
-(*let rec shuffle l =
-    match l with
-    | [] -> []
-    | a::b::q -> if Random.int 2 = 1 then a::b::(shuffle q) else b::a::(shuffle q)
-    | t::q -> t::(shuffle q*)
+let rec shuffle l =
+        let open List in
+        if length l < 2 then l 
+        else let l1,l2 = partition (fun _ -> Random.int 2 = 0) l in
+        (shuffle l1) @ (shuffle l2)
 
 let iter_border x y = 
     List.filter 
         (fun (x,y) -> x > 0 && x < world_width - 1 && y > 0 && y < world_height - 1) 
-        [(x+1,y);(x,y+1);(x - 1,y);(x,y - 1)] 
+        [(x+1,y);(x,y+1);(x - 1,y);(x,y - 1)] |> shuffle
 
 let laby world =
     let qqty_sol_vois x y = 
         List.fold_left (fun s (x',y') -> if world.(x').(y') = Sol then s+1 else s) 0 (iter_border x y)
     in
-    let rec aux n (x,y)  =
-        if world.(x).(y) <> Sol && n>1 then
+    let rec aux (x,y)  =
+        if world.(x).(y) = Obstacle  && (qqty_sol_vois x y <= 1) then
                 begin 
                     world.(x).(y) <- Sol;
-                    List.iter (aux (n-1)) (List.filter (fun (x,y) -> let q = qqty_sol_vois x y in q=1  ) (iter_border x y))
+                    List.iter aux (iter_border x y)
                 end
-   in aux 35 (1,1)
+   in aux (1,1)
 
 
 (* Question 2 : supprimer n Obstacles aléatoires dans le monde *)
-let dig_holes world n =() 
-   (*let w,h = Array.length world - 1, Array.length world.(0) - 1 in
+let dig_holes world n = 
+   let w,h = Array.length world - 1, Array.length world.(0) - 1 in
     for _ = 0 to n do
         let x,y = ref (1+Random.int w),ref (1+Random.int h) in
         while world.(!x).(!y) = Sol do
@@ -69,7 +69,7 @@ let dig_holes world n =()
         done;
         world.(!x).(!y) <- Sol
      done
-*)
+
 (* On demande ici de renvoyer un couple (d, path) où d est la matrice
 de distances dans un Dijkstra issu de g.position et path est soit
 [] soit la liste des coordonnées dans un chemin de g.position vers
