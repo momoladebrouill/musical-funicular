@@ -57,11 +57,28 @@ let defaire ((x1,y1),(x2,y2)) p =
     p.(x2).(y2) <- Pion
 
 exception Solution of mouvement list 
+let code p =
+    let c =ref 0 in
+  for i=0 to n-1 do
+      for j=0 to n-1 do
+        if p.(i).(j) = Pion then c := !c + (1 lsl (i*n+j))  
+  done 
+      done; 
+      !c
+
+let mauvaises = Hashtbl.create 42
+let ajoute x = Hashtbl.add mauvaises x ()
+let contient x = Hashtbl.mem mauvaises x
 
 let rec enumere pos chemin =
-    if valide pos then raise (Solution chemin) 
-    else List.iter (fun mvmnt -> faire mvmnt pos; enumere pos (mvmnt::chemin); defaire mvmnt pos )
-    (mouvements pos)
+    if valide pos then raise (Solution chemin) else 
+        let c = code pos in
+        if not (contient c) then
+        begin
+            let l = mouvements pos in
+            List.iter (fun mvmnt -> faire mvmnt pos; enumere pos (mvmnt::chemin); defaire mvmnt pos) l;
+            ajoute c 
+        end
 
 let resout () = 
     let p = plateau_initial () in
@@ -70,7 +87,7 @@ let resout () =
 let () = 
     let p = plateau_initial () in
     print_tableau p;
-    Printf.printf "qqty pions : %d\n" (compte_pions p);
+    Printf.printf "qqty pions : %d\ncode plateau inital : %d\n" (compte_pions p) (code p);
     let mouvements = resout () in
     List.iter (fun m -> print_tableau p; faire m p; let _ = read_line () in ()) mouvements
 
